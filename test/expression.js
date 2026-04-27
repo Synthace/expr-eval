@@ -103,6 +103,11 @@ describe('Expression', function () {
       assert.throws(function () { Parser.evaluate('x + 1'); }, Error);
     });
 
+    it(`4 == '4'`, function () {
+      var parser = new Parser({equality: 'loose'});
+      assert.strictEqual(parser.evaluate(`4 == '4'`), true);
+    });
+
     it('x = 3 * 2 + 1', function () {
       var parser = new Parser();
       assert.strictEqual(parser.evaluate('x = 3 * 2 + 1'), 7);

@@ -27,6 +27,14 @@ export function concat(a, b) {
   return '' + a + b;
 }
 
+export function looseEqual(a, b) {
+  return a == b
+}
+
+export function looseNotEqual(a, b) {
+  return a != b
+}
+
 export function equal(a, b) {
   return a === b;
 }

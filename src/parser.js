@@ -9,6 +9,8 @@ import {
   div,
   mod,
   concat,
+  looseEqual,
+  looseNotEqual,
   equal,
   notEqual,
   greaterThan,
@@ -49,11 +51,12 @@ import {
   expm1,
   log1p,
   log2,
-  sum
+  sum,
 } from './functions';
 
 export function Parser(options) {
   this.options = options || {};
+  let looseEquality = (this.options.equality || {}) === 'loose';
   this.unaryOps = {
     sin: Math.sin,
     cos: Math.cos,
@@ -98,8 +101,8 @@ export function Parser(options) {
     '%': mod,
     '^': Math.pow,
     '||': concat,
-    '==': equal,
-    '!=': notEqual,
+    '==': looseEquality ? looseEqual : equal,
+    '!=': looseEquality ? looseNotEqual : notEqual,
     '>': greaterThan,
     '<': lessThan,
     '>=': greaterThanEqual,

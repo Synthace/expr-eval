@@ -57,6 +57,7 @@ export interface ParserOptions {
     sign?: boolean,
     log2?: boolean
   };
+  equality?: 'loose' | 'strict';
 }
 
 export class Parser {
