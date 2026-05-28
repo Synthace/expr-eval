@@ -268,6 +268,7 @@ TokenStream.prototype.unescape = function (v) {
 };
 
 TokenStream.prototype.isComment = function () {
+  if (this.options.comments === false) return false;
   var c = this.expression.charAt(this.pos);
   if (c === '/' && this.expression.charAt(this.pos + 1) === '*') {
     this.pos = this.expression.indexOf('*/', this.pos) + 2;

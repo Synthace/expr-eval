@@ -597,4 +597,24 @@ describe('Parser', function () {
     assert.throws(function () { parser.evaluate('32 + min.bind'); }, /member access is not permitted/);
     assert.throws(function () { parser.evaluate('a.b', { a: { b: 2 } }); }, /member access is not permitted/);
   });
+
+  describe('comments: false option', function () {
+    const noCommentParser = new Parser({ comments: false });
+
+    it('should treat /* as a parse error, not a comment', function () {
+      assert.throws(function () { noCommentParser.evaluate('6 /* 3'); }, Error);
+    });
+
+    it('should throw an error for unterminated comment-like syntax (1/**)', function () {
+      assert.throws(function () { noCommentParser.evaluate('1/**'); }, Error);
+    });
+
+    it('complete comments also throw errors', function () {
+      assert.throws(function () { noCommentParser.evaluate('/**/'); }, Error);
+    });
+
+    it('should still evaluate normal expressions', function () {
+      assert.strictEqual(noCommentParser.evaluate('2 + 3'), 5);
+    });
+  });
 });

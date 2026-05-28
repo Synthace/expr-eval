@@ -539,6 +539,14 @@ Token.prototype.toString = function () {
   return this.type + ': ' + this.value;
 };
 
+function ParseError(msg, startPos, endPos) {
+  Error.call(this, msg);
+  this.message = msg;
+  this.startPos = startPos;
+  this.endPos = endPos != null ? endPos : startPos + 1;
+}
+ParseError.prototype = Object.create(Error.prototype);
+
 function TokenStream(parser, expression) {
   this.pos = 0;
   this.current = null;
@@ -799,6 +807,7 @@ TokenStream.prototype.unescape = function (v) {
 };
 
 TokenStream.prototype.isComment = function () {
+  if (this.options.comments === false) return false;
   var c = this.expression.charAt(this.pos);
   if (c === '/' && this.expression.charAt(this.pos + 1) === '*') {
     this.pos = this.expression.indexOf('*/', this.pos) + 2;
@@ -987,9 +996,13 @@ TokenStream.prototype.getCoordinates = function () {
   };
 };
 
-TokenStream.prototype.parseError = function (msg) {
+TokenStream.prototype.parseError = function (msg, endPos) {
   var coords = this.getCoordinates();
-  throw new Error('parse error [' + coords.line + ':' + coords.column + ']: ' + msg);
+  throw new ParseError(
+    'parse error [' + coords.line + ':' + coords.column + ']: ' + msg,
+    this.pos,
+    endPos
+  );
 };
 
 function ParserState(parser, tokenStream, options) {
@@ -1042,8 +1055,7 @@ ParserState.prototype.accept = function (type, value) {
 
 ParserState.prototype.expect = function (type, value) {
   if (!this.accept(type, value)) {
-    var coords = this.tokens.getCoordinates();
-    throw new Error('parse error [' + coords.line + ':' + coords.column + ']: Expected ' + (value || type));
+    this.tokens.parseError('Expected ' + (value || type));
   }
 };
 
@@ -1070,7 +1082,10 @@ ParserState.prototype.parseAtom = function (instr) {
       instr.push(new Instruction(IARRAY, argCount));
     }
   } else {
-    throw new Error('unexpected ' + this.nextToken);
+    this.tokens.parseError(
+      'unexpected ' + this.nextToken,
+      this.nextToken.pos + String(this.nextToken.value).length
+    );
   }
 };
 
@@ -1127,7 +1142,7 @@ ParserState.prototype.parseVariableAssignmentExpression = function (instr) {
     var lastInstrIndex = instr.length - 1;
     if (varName.type === IFUNCALL) {
       if (!this.tokens.isOperatorEnabled('()=')) {
-        throw new Error('function definition is not permitted');
+        this.tokens.parseError('function definition is not permitted');
       }
       for (var i = 0, len = varName.value + 1; i < len; i++) {
         var index = lastInstrIndex - i;
@@ -1141,7 +1156,10 @@ ParserState.prototype.parseVariableAssignmentExpression = function (instr) {
       continue;
     }
     if (varName.type !== IVAR && varName.type !== IMEMBER) {
-      throw new Error('expected variable for assignment');
+      this.tokens.parseError(
+        'expected variable for assignment',
+        varName.pos + String(varName.value).length
+      );
     }
     this.parseVariableAssignmentExpression(varValue);
     instr.push(new Instruction(IVARNAME, varName.value));
@@ -1305,21 +1323,30 @@ ParserState.prototype.parseMemberExpression = function (instr) {
 
     if (op.value === '.') {
       if (!this.allowMemberAccess) {
-        throw new Error('unexpected ".", member access is not permitted');
+        this.tokens.parseError(
+          'unexpected ".", member access is not permitted',
+          op.pos + 1
+        );
       }
 
       this.expect(TNAME);
       instr.push(new Instruction(IMEMBER, this.current.value));
     } else if (op.value === '[') {
       if (!this.tokens.isOperatorEnabled('[')) {
-        throw new Error('unexpected "[]", arrays are disabled');
+        this.tokens.parseError(
+          'unexpected "[]", arrays are disabled',
+          op.pos + 1
+        );
       }
 
       this.parseExpression(instr);
       this.expect(TBRACKET, ']');
       instr.push(binaryInstruction('['));
     } else {
-      throw new Error('unexpected symbol: ' + op.value);
+      this.tokens.parseError(
+        'unexpected symbol: ' + op.value,
+        op.pos + String(op.value).length
+      );
     }
   }
 };
@@ -1855,8 +1882,9 @@ Parser.prototype.isOperatorEnabled = function (op) {
 // Backwards compatibility
 var index = {
   Parser: Parser,
-  Expression: Expression
+  Expression: Expression,
+  ParseError: ParseError
 };
 
 export default index;
-export { Expression, Parser };
+export { Expression, ParseError, Parser };
