@@ -9,6 +9,7 @@ export interface Values {
 
 export interface ParserOptions {
   allowMemberAccess?: boolean;
+  comments?: boolean;
   operators?: {
     add?: boolean,
     comparison?: boolean,
