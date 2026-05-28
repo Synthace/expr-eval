@@ -81,7 +81,7 @@ ParserState.prototype.parseAtom = function (instr) {
   } else {
     this.tokens.parseError(
       'unexpected ' + this.nextToken,
-      this.nextToken.pos + String(this.nextToken.value).length
+      this.nextToken.index + String(this.nextToken.value).length
     );
   }
 };
@@ -155,7 +155,7 @@ ParserState.prototype.parseVariableAssignmentExpression = function (instr) {
     if (varName.type !== IVAR && varName.type !== IMEMBER) {
       this.tokens.parseError(
         'expected variable for assignment',
-        varName.pos + String(varName.value).length
+        this.current.index + String(this.current.value).length
       );
     }
     this.parseVariableAssignmentExpression(varValue);
@@ -322,7 +322,7 @@ ParserState.prototype.parseMemberExpression = function (instr) {
       if (!this.allowMemberAccess) {
         this.tokens.parseError(
           'unexpected ".", member access is not permitted',
-          op.pos + 1
+          op.index + 1
         );
       }
 
@@ -332,7 +332,7 @@ ParserState.prototype.parseMemberExpression = function (instr) {
       if (!this.tokens.isOperatorEnabled('[')) {
         this.tokens.parseError(
           'unexpected "[]", arrays are disabled',
-          op.pos + 1
+          op.index + 1
         );
       }
 
@@ -342,7 +342,7 @@ ParserState.prototype.parseMemberExpression = function (instr) {
     } else {
       this.tokens.parseError(
         'unexpected symbol: ' + op.value,
-        op.pos + String(op.value).length
+        op.index + String(op.value).length
       );
     }
   }

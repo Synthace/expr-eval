@@ -89,4 +89,29 @@ describe('parse error positions', function () {
     var e = getError(function () { parser.parse('1 + @'); });
     assert.strictEqual(e.endPos, e.startPos + 1);
   });
+
+  // These tests verify that endPos is a valid number (not NaN) for error paths
+  // where the offending token's position is read from the token object.
+
+  it('unexpected token in atom — endPos is a finite number', function () {
+    const e = getError(function () { parser.parse('1 + %'); });
+    assert.ok(Number.isFinite(e.endPos), 'endPos should be finite, got: ' + e.endPos);
+    assert.strictEqual(e.endPos, 5);
+  });
+
+  it('expected variable for assignment — endPos is a finite number', function () {
+    const e = getError(function () { parser.parse('1 = 2'); });
+    assert.strictEqual(e.endPos, 3);
+  });
+
+  it('member access not permitted — endPos is a finite number', function () {
+    const e = getError(function () { parserNoMember.parse('a.b'); });
+    assert.strictEqual(e.endPos, 2);
+  });
+
+  it('arrays disabled — endPos is a finite number', function () {
+    const parserNoArrays = new Parser({ operators: { array: false } });
+    const e = getError(function () { parserNoArrays.parse('a[0]'); });
+    assert.strictEqual(e.endPos, 2);
+  });
 });
