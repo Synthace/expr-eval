@@ -11,14 +11,17 @@
 
 import { Expression } from './src/expression';
 import { Parser } from './src/parser';
+import { ParseError } from './src/token-stream';
 
 export {
   Expression,
-  Parser
+  Parser,
+  ParseError
 };
 
 // Backwards compatibility
 export default{
   Parser: Parser,
-  Expression: Expression
+  Expression: Expression,
+  ParseError: ParseError
 };
