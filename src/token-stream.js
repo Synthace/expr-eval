@@ -1,5 +1,13 @@
 import { Token, TEOF, TOP, TNUMBER, TSTRING, TPAREN, TBRACKET, TCOMMA, TNAME, TSEMICOLON } from './token';
 
+export function ParseError(msg, startPos, endPos) {
+  Error.call(this, msg);
+  this.message = msg;
+  this.startPos = startPos;
+  this.endPos = endPos != null ? endPos : startPos + 1;
+}
+ParseError.prototype = Object.create(Error.prototype);
+
 export function TokenStream(parser, expression) {
   this.pos = 0;
   this.current = null;
@@ -448,7 +456,11 @@ TokenStream.prototype.getCoordinates = function () {
   };
 };
 
-TokenStream.prototype.parseError = function (msg) {
+TokenStream.prototype.parseError = function (msg, endPos) {
   var coords = this.getCoordinates();
-  throw new Error('parse error [' + coords.line + ':' + coords.column + ']: ' + msg);
+  throw new ParseError(
+    'parse error [' + coords.line + ':' + coords.column + ']: ' + msg,
+    this.pos,
+    endPos
+  );
 };

@@ -1,8 +1,8 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (global = global || self, factory(global.exprEval = {}));
-}(this, (function (exports) { 'use strict';
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.exprEval = {}));
+})(this, (function (exports) { 'use strict';
 
   var INUMBER = 'INUMBER';
   var IOP1 = 'IOP1';
@@ -545,6 +545,14 @@
     return this.type + ': ' + this.value;
   };
 
+  function ParseError(msg, startPos, endPos) {
+    Error.call(this, msg);
+    this.message = msg;
+    this.startPos = startPos;
+    this.endPos = endPos != null ? endPos : startPos + 1;
+  }
+  ParseError.prototype = Object.create(Error.prototype);
+
   function TokenStream(parser, expression) {
     this.pos = 0;
     this.current = null;
@@ -993,9 +1001,13 @@
     };
   };
 
-  TokenStream.prototype.parseError = function (msg) {
+  TokenStream.prototype.parseError = function (msg, endPos) {
     var coords = this.getCoordinates();
-    throw new Error('parse error [' + coords.line + ':' + coords.column + ']: ' + msg);
+    throw new ParseError(
+      'parse error [' + coords.line + ':' + coords.column + ']: ' + msg,
+      this.pos,
+      endPos
+    );
   };
 
   function ParserState(parser, tokenStream, options) {
@@ -1048,8 +1060,7 @@
 
   ParserState.prototype.expect = function (type, value) {
     if (!this.accept(type, value)) {
-      var coords = this.tokens.getCoordinates();
-      throw new Error('parse error [' + coords.line + ':' + coords.column + ']: Expected ' + (value || type));
+      this.tokens.parseError('Expected ' + (value || type));
     }
   };
 
@@ -1076,7 +1087,10 @@
         instr.push(new Instruction(IARRAY, argCount));
       }
     } else {
-      throw new Error('unexpected ' + this.nextToken);
+      this.tokens.parseError(
+        'unexpected ' + this.nextToken,
+        this.nextToken.pos + String(this.nextToken.value).length
+      );
     }
   };
 
@@ -1133,7 +1147,7 @@
       var lastInstrIndex = instr.length - 1;
       if (varName.type === IFUNCALL) {
         if (!this.tokens.isOperatorEnabled('()=')) {
-          throw new Error('function definition is not permitted');
+          this.tokens.parseError('function definition is not permitted');
         }
         for (var i = 0, len = varName.value + 1; i < len; i++) {
           var index = lastInstrIndex - i;
@@ -1147,7 +1161,10 @@
         continue;
       }
       if (varName.type !== IVAR && varName.type !== IMEMBER) {
-        throw new Error('expected variable for assignment');
+        this.tokens.parseError(
+          'expected variable for assignment',
+          varName.pos + String(varName.value).length
+        );
       }
       this.parseVariableAssignmentExpression(varValue);
       instr.push(new Instruction(IVARNAME, varName.value));
@@ -1311,21 +1328,30 @@
 
       if (op.value === '.') {
         if (!this.allowMemberAccess) {
-          throw new Error('unexpected ".", member access is not permitted');
+          this.tokens.parseError(
+            'unexpected ".", member access is not permitted',
+            op.pos + 1
+          );
         }
 
         this.expect(TNAME);
         instr.push(new Instruction(IMEMBER, this.current.value));
       } else if (op.value === '[') {
         if (!this.tokens.isOperatorEnabled('[')) {
-          throw new Error('unexpected "[]", arrays are disabled');
+          this.tokens.parseError(
+            'unexpected "[]", arrays are disabled',
+            op.pos + 1
+          );
         }
 
         this.parseExpression(instr);
         this.expect(TBRACKET, ']');
         instr.push(binaryInstruction('['));
       } else {
-        throw new Error('unexpected symbol: ' + op.value);
+        this.tokens.parseError(
+          'unexpected symbol: ' + op.value,
+          op.pos + String(op.value).length
+        );
       }
     }
   };
@@ -1459,13 +1485,13 @@
   var GAMMA_G = 4.7421875;
   var GAMMA_P = [
     0.99999999999999709182,
-    57.156235665862923517, -59.597960355475491248,
-    14.136097974741747174, -0.49191381609762019978,
+    57.156235665862923517, -59.59796035547549,
+    14.136097974741747174, -0.4919138160976202,
     0.33994649984811888699e-4,
-    0.46523628927048575665e-4, -0.98374475304879564677e-4,
-    0.15808870322491248884e-3, -0.21026444172410488319e-3,
-    0.21743961811521264320e-3, -0.16431810653676389022e-3,
-    0.84418223983852743293e-4, -0.26190838401581408670e-4,
+    0.46523628927048575665e-4, -9837447530487956e-20,
+    0.15808870322491248884e-3, -21026444172410488e-20,
+    0.21743961811521264320e-3, -1643181065367639e-19,
+    0.84418223983852743293e-4, -26190838401581408e-21,
     0.36899182659531622704e-5
   ];
 
@@ -1858,16 +1884,19 @@
    but don't feel like you have to let me know or ask permission.
   */
 
+
   // Backwards compatibility
   var index = {
     Parser: Parser,
-    Expression: Expression
+    Expression: Expression,
+    ParseError: ParseError
   };
 
   exports.Expression = Expression;
+  exports.ParseError = ParseError;
   exports.Parser = Parser;
   exports.default = index;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
-})));
+}));
