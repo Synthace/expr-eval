@@ -1379,11 +1379,11 @@ function concat(a, b) {
 }
 
 function looseEqual(a, b) {
-  return a == b
+  return a == b;
 }
 
 function looseNotEqual(a, b) {
-  return a != b
+  return a != b;
 }
 
 function equal(a, b) {
@@ -1470,7 +1470,7 @@ function random(a) {
 }
 
 function factorial(a) { // a!
-  return gamma(a + 1);
+  return gamma(add(a, 1));
 }
 
 function isInteger(value) {

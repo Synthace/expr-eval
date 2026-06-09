@@ -100,6 +100,12 @@ describe('Functions', function () {
       assert.strictEqual(parser.evaluate('fac(7)'), 5040);
       assert.strictEqual(parser.evaluate('fac(21)'), 51090942171709440000);
     });
+
+    it('should coerce string arguments to numbers', function () {
+      var parser = new Parser();
+      assert.strictEqual(parser.evaluate('fac(n)', { n: '3' }), 6);
+      assert.strictEqual(parser.evaluate('fac(n)', { n: '5' }), 120);
+    });
   });
 
   describe('min(a, b, ...)', function () {

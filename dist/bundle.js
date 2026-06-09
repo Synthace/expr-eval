@@ -1385,11 +1385,11 @@
   }
 
   function looseEqual(a, b) {
-    return a == b
+    return a == b;
   }
 
   function looseNotEqual(a, b) {
-    return a != b
+    return a != b;
   }
 
   function equal(a, b) {
@@ -1476,7 +1476,7 @@
   }
 
   function factorial(a) { // a!
-    return gamma(a + 1);
+    return gamma(add(a, 1));
   }
 
   function isInteger(value) {

@@ -28,11 +28,11 @@ export function concat(a, b) {
 }
 
 export function looseEqual(a, b) {
-  return a == b
+  return a == b;
 }
 
 export function looseNotEqual(a, b) {
-  return a != b
+  return a != b;
 }
 
 export function equal(a, b) {
@@ -119,7 +119,7 @@ export function random(a) {
 }
 
 export function factorial(a) { // a!
-  return gamma(a + 1);
+  return gamma(add(a, 1));
 }
 
 function isInteger(value) {
